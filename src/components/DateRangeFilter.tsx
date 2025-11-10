@@ -4,7 +4,9 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card } from "./ui/card";
+import { useTranslation } from "@/lib/i18n";
 import { startOfDay, subDays, format } from "date-fns";
+import { pl, enUS } from "date-fns/locale";
 import { Calendar } from "lucide-react";
 
 interface DateRangeFilterProps {
@@ -13,8 +15,11 @@ interface DateRangeFilterProps {
 }
 
 export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilterProps) {
+	const { t, language } = useTranslation();
 	const [preset, setPreset] = useState<DateRangePreset>("7days");
 	const [showCustom, setShowCustom] = useState(false);
+
+	const locale = language === "pl" ? pl : enUS;
 
 	function handlePresetChange(newPreset: DateRangePreset) {
 		setPreset(newPreset);
@@ -51,28 +56,28 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
 			<div className="space-y-4">
 				<div className="flex items-center gap-2">
 					<Calendar className="h-4 w-4 text-muted-foreground" />
-					<h3 className="font-medium">Date Range</h3>
+					<h3 className="font-medium">{t("dateRange.title")}</h3>
 				</div>
 
 				<div className="flex flex-wrap gap-2">
 					<Button variant={preset === "today" ? "default" : "outline"} size="sm" onClick={() => handlePresetChange("today")}>
-						Today
+						{t("dateRange.today")}
 					</Button>
 					<Button variant={preset === "7days" ? "default" : "outline"} size="sm" onClick={() => handlePresetChange("7days")}>
-						Last 7 Days
+						{t("dateRange.last7Days")}
 					</Button>
 					<Button variant={preset === "30days" ? "default" : "outline"} size="sm" onClick={() => handlePresetChange("30days")}>
-						Last 30 Days
+						{t("dateRange.last30Days")}
 					</Button>
 					<Button variant={preset === "custom" ? "default" : "outline"} size="sm" onClick={() => handlePresetChange("custom")}>
-						Custom Range
+						{t("dateRange.customRange")}
 					</Button>
 				</div>
 
 				{showCustom && (
 					<div className="grid grid-cols-2 gap-4 pt-2 border-t">
 						<div className="space-y-2">
-							<Label htmlFor="from-date">From</Label>
+							<Label htmlFor="from-date">{t("dateRange.from")}</Label>
 							<Input
 								id="from-date"
 								type="date"
@@ -81,7 +86,7 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="to-date">To</Label>
+							<Label htmlFor="to-date">{t("dateRange.to")}</Label>
 							<Input
 								id="to-date"
 								type="date"
@@ -93,7 +98,7 @@ export function DateRangeFilter({ dateRange, onDateRangeChange }: DateRangeFilte
 				)}
 
 				<div className="text-sm text-muted-foreground pt-2 border-t">
-					Showing: {format(dateRange.from, "MMM dd, yyyy")} - {format(dateRange.to, "MMM dd, yyyy")}
+					{t("dateRange.showing")} {format(dateRange.from, "MMM dd, yyyy", { locale })} - {format(dateRange.to, "MMM dd, yyyy", { locale })}
 				</div>
 			</div>
 		</Card>

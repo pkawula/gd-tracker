@@ -1,0 +1,78 @@
+{
+	"app": {
+		"title": "GD Tracker",
+		"subtitle": "Monitor Cukrzycy Ciążowej",
+		"description": "Śledź swoje odczyty glukozy w cukrzycy ciążowej",
+		"loading": "Ładowanie...",
+		"signIn": "Zaloguj się przez Google",
+		"signOut": "Wyloguj"
+	},
+	"dashboard": {
+		"title": "Twoje Odczyty",
+		"target": "Cel: Na czczo <91 mg/dL, 1h po posiłku <140 mg/dL",
+		"errorLoading": "Błąd ładowania odczytów:",
+		"loadingReadings": "Ładowanie odczytów..."
+	},
+	"readings": {
+		"add": "Dodaj Odczyt",
+		"adding": "Dodawanie...",
+		"noReadings": "Brak odczytów",
+		"noReadingsSubtext": "Dodaj pierwszy odczyt, aby rozpocząć",
+		"table": {
+			"dateTime": "Data i Godzina",
+			"type": "Typ",
+			"glucose": "Glukoza (mg/dL)",
+			"status": "Status",
+			"notes": "Notatki"
+		},
+		"status": {
+			"inRange": "✓ W Normie",
+			"nearLimit": "⚠ Blisko Limitu",
+			"outOfRange": "✗ Poza Normą"
+		}
+	},
+	"addReading": {
+		"title": "Dodaj Odczyt Glukozy",
+		"glucoseLevel": "Poziom Glukozy (mg/dL) *",
+		"glucosePlaceholder": "Wprowadź wartość glukozy",
+		"measurementType": "Typ Pomiaru *",
+		"dateTime": "Data i Godzina *",
+		"notes": "Notatki (Opcjonalne)",
+		"notesPlaceholder": "Dodaj odpowiednie notatki...",
+		"cancel": "Anuluj",
+		"errors": {
+			"notLoggedIn": "Musisz być zalogowany, aby dodać odczyt",
+			"invalidGlucose": "Wartość glukozy musi być między 0 a 500",
+			"measurementTypeRequired": "Typ pomiaru jest wymagany"
+		}
+	},
+	"measurementTypes": {
+		"fasting": "Na czczo",
+		"1hr_after_meal": "1h po posiłku"
+	},
+	"dateRange": {
+		"title": "Zakres Dat",
+		"today": "Dzisiaj",
+		"last7Days": "Ostatnie 7 Dni",
+		"last30Days": "Ostatnie 30 Dni",
+		"customRange": "Niestandardowy Zakres",
+		"from": "Od",
+		"to": "Do",
+		"showing": "Wyświetlanie:"
+	},
+	"export": {
+		"pdf": "Eksportuj PDF",
+		"noReadings": "Brak odczytów do eksportu"
+	},
+	"pdf": {
+		"title": "Raport Odczyty Glukozy",
+		"period": "Okres:",
+		"targetRanges": "Zakresy Docelowe: Na czczo <{fasting} mg/dL | 1h po posiłku <{meal} mg/dL",
+		"headers": {
+			"date": "Data",
+			"fasting": "Na czczo",
+			"meal": "Posiłek {number}"
+		},
+		"footer": "Strona {current} z {total} | Wygenerowano {date}"
+	}
+}

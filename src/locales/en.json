@@ -1,0 +1,78 @@
+{
+	"app": {
+		"title": "GD Tracker",
+		"subtitle": "Gestational Diabetes Monitor",
+		"description": "Track your gestational diabetes glucose readings",
+		"loading": "Loading...",
+		"signIn": "Sign in with Google",
+		"signOut": "Sign Out"
+	},
+	"dashboard": {
+		"title": "Your Readings",
+		"target": "Target: Fasting <91 mg/dL, 1hr After Meal <140 mg/dL",
+		"errorLoading": "Error loading readings:",
+		"loadingReadings": "Loading readings..."
+	},
+	"readings": {
+		"add": "Add Reading",
+		"adding": "Adding...",
+		"noReadings": "No readings found",
+		"noReadingsSubtext": "Add your first reading to get started",
+		"table": {
+			"dateTime": "Date & Time",
+			"type": "Type",
+			"glucose": "Glucose (mg/dL)",
+			"status": "Status",
+			"notes": "Notes"
+		},
+		"status": {
+			"inRange": "✓ In Range",
+			"nearLimit": "⚠ Near Limit",
+			"outOfRange": "✗ Out of Range"
+		}
+	},
+	"addReading": {
+		"title": "Add Glucose Reading",
+		"glucoseLevel": "Glucose Level (mg/dL) *",
+		"glucosePlaceholder": "Enter glucose value",
+		"measurementType": "Measurement Type *",
+		"dateTime": "Date & Time *",
+		"notes": "Notes (Optional)",
+		"notesPlaceholder": "Add any relevant notes...",
+		"cancel": "Cancel",
+		"errors": {
+			"notLoggedIn": "You must be logged in to add a reading",
+			"invalidGlucose": "Glucose value must be between 0 and 500",
+			"measurementTypeRequired": "Measurement type is required"
+		}
+	},
+	"measurementTypes": {
+		"fasting": "Fasting",
+		"1hr_after_meal": "1hr After Meal"
+	},
+	"dateRange": {
+		"title": "Date Range",
+		"today": "Today",
+		"last7Days": "Last 7 Days",
+		"last30Days": "Last 30 Days",
+		"customRange": "Custom Range",
+		"from": "From",
+		"to": "To",
+		"showing": "Showing:"
+	},
+	"export": {
+		"pdf": "Export PDF",
+		"noReadings": "No readings to export"
+	},
+	"pdf": {
+		"title": "Glucose Readings Report",
+		"period": "Period:",
+		"targetRanges": "Target Ranges: Fasting <{fasting} mg/dL | 1hr After Meal <{meal} mg/dL",
+		"headers": {
+			"date": "Date",
+			"fasting": "Fasting",
+			"meal": "Meal {number}"
+		},
+		"footer": "Page {current} of {total} | Generated on {date}"
+	}
+}

@@ -1,5 +1,6 @@
 import { Button } from "./ui/button";
 import { Download } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 import { generatePDF } from "@/lib/pdf-generator";
 import type { GlucoseReading, DateRange } from "@/types";
 
@@ -9,18 +10,20 @@ interface ExportPDFButtonProps {
 }
 
 export function ExportPDFButton({ readings, dateRange }: ExportPDFButtonProps) {
+	const { t, language } = useTranslation();
+
 	function handleExport() {
 		if (readings.length === 0) {
-			alert("No readings to export");
+			alert(t("export.noReadings"));
 			return;
 		}
-		generatePDF(readings, dateRange);
+		generatePDF(readings, dateRange, t, language);
 	}
 
 	return (
 		<Button variant="outline" size="lg" onClick={handleExport} className="gap-2" disabled={readings.length === 0}>
 			<Download className="h-5 w-5" />
-			Export PDF
+			{t("export.pdf")}
 		</Button>
 	);
 }

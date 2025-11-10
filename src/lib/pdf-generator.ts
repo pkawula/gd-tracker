@@ -1,7 +1,10 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format, parseISO } from "date-fns";
+import { pl, enUS } from "date-fns/locale";
 import { type GlucoseReading, type DateRange, TARGET_RANGES } from "@/types";
+
+type TranslationFunction = (key: string, params?: Record<string, string | number>) => string;
 
 interface GroupedReadings {
 	[date: string]: GlucoseReading[];
@@ -26,8 +29,9 @@ function groupReadingsByDay(readings: GlucoseReading[]): GroupedReadings {
 	return grouped;
 }
 
-export function generatePDF(readings: GlucoseReading[], dateRange: DateRange) {
+export function generatePDF(readings: GlucoseReading[], dateRange: DateRange, t: TranslationFunction, language: "en" | "pl" = "en") {
 	const doc = new jsPDF();
+	const locale = language === "pl" ? pl : enUS;
 
 	// Sort readings ascending (oldest first) for PDF
 	const sortedReadings = [...readings].sort((a, b) => new Date(a.measured_at).getTime() - new Date(b.measured_at).getTime());
@@ -39,23 +43,30 @@ export function generatePDF(readings: GlucoseReading[], dateRange: DateRange) {
 	// Add title
 	doc.setFontSize(18);
 	doc.setFont("helvetica", "bold");
-	doc.text("Glucose Readings Report", 14, 20);
+	doc.text(t("pdf.title"), 14, 20);
 
 	// Add date range
 	doc.setFontSize(10);
 	doc.setFont("helvetica", "normal");
-	doc.text(`Period: ${format(dateRange.from, "MMM dd, yyyy")} - ${format(dateRange.to, "MMM dd, yyyy")}`, 14, 28);
+	doc.text(`${t("pdf.period")} ${format(dateRange.from, "MMM dd, yyyy", { locale })} - ${format(dateRange.to, "MMM dd, yyyy", { locale })}`, 14, 28);
 
 	// Add target ranges
 	doc.setFontSize(9);
 	doc.setTextColor(100);
-	doc.text(`Target Ranges: Fasting <${TARGET_RANGES.fasting} mg/dL | 1hr After Meal <${TARGET_RANGES["1hr_after_meal"]} mg/dL`, 14, 34);
+	doc.text(
+		t("pdf.targetRanges", {
+			fasting: TARGET_RANGES.fasting.toString(),
+			meal: TARGET_RANGES["1hr_after_meal"].toString(),
+		}),
+		14,
+		34
+	);
 	doc.setTextColor(0);
 
 	// Create table data
 	const tableData = sortedDates.map((date) => {
 		const dayReadings = groupedByDay[date];
-		const row: (string | number)[] = [format(parseISO(date), "MMM dd, yyyy")];
+		const row: (string | number)[] = [format(parseISO(date), "MMM dd, yyyy", { locale })];
 
 		// Add fasting
 		const fasting = dayReadings.find((r) => r.measurement_type === "fasting");
@@ -70,10 +81,22 @@ export function generatePDF(readings: GlucoseReading[], dateRange: DateRange) {
 		return row;
 	});
 
+	// Generate table headers
+	const headers = [
+		t("pdf.headers.date"),
+		t("pdf.headers.fasting"),
+		t("pdf.headers.meal", { number: "1" }),
+		t("pdf.headers.meal", { number: "2" }),
+		t("pdf.headers.meal", { number: "3" }),
+		t("pdf.headers.meal", { number: "4" }),
+		t("pdf.headers.meal", { number: "5" }),
+		t("pdf.headers.meal", { number: "6" }),
+	];
+
 	// Generate table
 	autoTable(doc, {
 		startY: 40,
-		head: [["Date", "Fasting", "Meal 1", "Meal 2", "Meal 3", "Meal 4", "Meal 5", "Meal 6"]],
+		head: [headers],
 		body: tableData,
 		theme: "grid",
 		headStyles: {
@@ -123,7 +146,15 @@ export function generatePDF(readings: GlucoseReading[], dateRange: DateRange) {
 		doc.setPage(i);
 		doc.setFontSize(8);
 		doc.setTextColor(150);
-		doc.text(`Page ${i} of ${pageCount} | Generated on ${format(new Date(), "MMM dd, yyyy HH:mm")}`, 14, doc.internal.pageSize.height - 10);
+		doc.text(
+			t("pdf.footer", {
+				current: i.toString(),
+				total: pageCount.toString(),
+				date: format(new Date(), "MMM dd, yyyy HH:mm", { locale }),
+			}),
+			14,
+			doc.internal.pageSize.height - 10
+		);
 	}
 
 	// Save PDF
