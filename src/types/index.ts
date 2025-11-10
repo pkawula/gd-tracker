@@ -19,3 +19,5 @@ export const TARGET_RANGES = {
 	fasting: 91,
 	"1hr_after_meal": 140,
 } as const;
+
+export type DateRangePreset = "today" | "7days" | "30days" | "custom";
