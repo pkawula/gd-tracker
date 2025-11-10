@@ -1,4 +1,4 @@
-import { useState, useActionState } from "react";
+import { useState, useActionState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -10,6 +10,14 @@ import { Plus } from "lucide-react";
 import type { MeasurementType } from "@/types";
 
 async function addReadingAction(_prevState: { error: string | null; success: boolean }, formData: FormData) {
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return { error: "You must be logged in to add a reading", success: false };
+	}
+
 	const glucoseValue = parseInt(formData.get("glucose_value") as string);
 	const measurementType = formData.get("measurement_type") as MeasurementType;
 	const measuredAt = formData.get("measured_at") as string;
@@ -25,6 +33,7 @@ async function addReadingAction(_prevState: { error: string | null; success: boo
 	}
 
 	const { error } = await supabase.from("glucose_readings").insert({
+		user_id: user.id,
 		glucose_value: glucoseValue,
 		measurement_type: measurementType,
 		measured_at: measuredAt,
@@ -50,11 +59,13 @@ export function AddRecordDialog({ onSuccess }: { onSuccess: () => void }) {
 	const now = new Date();
 	const localDatetime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
-	// Close dialog and refresh on success
-	if (state.success && open) {
-		setOpen(false);
-		onSuccess();
-	}
+	useEffect(() => {
+		// Close dialog and refresh on success
+		if (state.success) {
+			setOpen(false);
+			onSuccess();
+		}
+	}, [state, onSuccess]);
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>

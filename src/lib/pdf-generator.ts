@@ -61,9 +61,9 @@ export function generatePDF(readings: GlucoseReading[], dateRange: DateRange) {
 		const fasting = dayReadings.find((r) => r.measurement_type === "fasting");
 		row.push(fasting ? fasting.glucose_value : "-");
 
-		// Add up to 3 meals
+		// Add up to 6 meals
 		const meals = dayReadings.filter((r) => r.measurement_type === "1hr_after_meal");
-		for (let i = 0; i < 3; i++) {
+		for (let i = 0; i < 6; i++) {
 			row.push(meals[i] ? meals[i].glucose_value : "-");
 		}
 
@@ -73,7 +73,7 @@ export function generatePDF(readings: GlucoseReading[], dateRange: DateRange) {
 	// Generate table
 	autoTable(doc, {
 		startY: 40,
-		head: [["Date", "Fasting", "Meal 1", "Meal 2", "Meal 3"]],
+		head: [["Date", "Fasting", "Meal 1", "Meal 2", "Meal 3", "Meal 4", "Meal 5", "Meal 6"]],
 		body: tableData,
 		theme: "grid",
 		headStyles: {
@@ -86,11 +86,14 @@ export function generatePDF(readings: GlucoseReading[], dateRange: DateRange) {
 			fontSize: 9,
 		},
 		columnStyles: {
-			0: { cellWidth: 40, fontStyle: "bold" },
-			1: { cellWidth: 25, halign: "center" },
-			2: { cellWidth: 25, halign: "center" },
-			3: { cellWidth: 25, halign: "center" },
-			4: { cellWidth: 25, halign: "center" },
+			0: { cellWidth: 35, fontStyle: "bold" },
+			1: { cellWidth: 20, halign: "center" },
+			2: { cellWidth: 20, halign: "center" },
+			3: { cellWidth: 20, halign: "center" },
+			4: { cellWidth: 20, halign: "center" },
+			5: { cellWidth: 20, halign: "center" },
+			6: { cellWidth: 20, halign: "center" },
+			7: { cellWidth: 20, halign: "center" },
 		},
 		didParseCell: function (data) {
 			// Color code values
