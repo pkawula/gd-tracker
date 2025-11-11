@@ -16,6 +16,8 @@
 	"readings": {
 		"add": "Dodaj Odczyt",
 		"adding": "Dodawanie...",
+		"editLabel": "Edytuj Odczyt",
+		"editing": "Aktualizowanie...",
 		"noReadings": "Brak odczytów",
 		"noReadingsSubtext": "Dodaj pierwszy odczyt, aby rozpocząć",
 		"table": {
@@ -23,7 +25,18 @@
 			"type": "Typ",
 			"glucose": "Glukoza (mg/dL)",
 			"status": "Status",
-			"notes": "Notatki"
+			"notes": "Notatki",
+			"lastModified": "Ostatnia Modyfikacja",
+			"actions": "Akcje"
+		},
+		"delete": {
+			"button": "Usuń",
+			"confirm": "Czy na pewno chcesz usunąć ten odczyt?",
+			"error": "Nie udało się usunąć odczytu"
+		},
+		"edit": {
+			"button": "Edytuj",
+			"error": "Nie udało się zaktualizować odczytu"
 		},
 		"status": {
 			"inRange": "✓ W Normie",
@@ -46,6 +59,23 @@
 			"measurementTypeRequired": "Typ pomiaru jest wymagany"
 		}
 	},
+	"editReading": {
+		"title": "Edytuj Odczyt Glukozy",
+		"glucoseLevel": "Poziom Glukozy (mg/dL) *",
+		"glucosePlaceholder": "Wprowadź wartość glukozy",
+		"measurementType": "Typ Pomiaru *",
+		"dateTime": "Data i Godzina *",
+		"notes": "Notatki (Opcjonalne)",
+		"notesPlaceholder": "Dodaj odpowiednie notatki...",
+		"cancel": "Anuluj",
+		"errors": {
+			"notLoggedIn": "Musisz być zalogowany, aby edytować odczyt",
+			"invalidGlucose": "Wartość glukozy musi być między 0 a 500",
+			"measurementTypeRequired": "Typ pomiaru jest wymagany",
+			"notFound": "Nie znaleziono odczytu",
+			"unauthorized": "Nie masz uprawnień do edycji tego odczytu"
+		}
+	},
 	"measurementTypes": {
 		"fasting": "Na czczo",
 		"1hr_after_meal": "1h po posiłku"
@@ -65,13 +95,13 @@
 		"noReadings": "Brak odczytów do eksportu"
 	},
 	"pdf": {
-		"title": "Raport Odczyty Glukozy",
+		"title": "Raport Odczytów Glukozy",
 		"period": "Okres:",
 		"targetRanges": "Zakresy Docelowe: Na czczo <{fasting} mg/dL | 1h po posiłku <{meal} mg/dL",
 		"headers": {
 			"date": "Data",
 			"fasting": "Na czczo",
-			"meal": "Posiłek {number}"
+			"meal": "Pos. {number}"
 		},
 		"footer": "Strona {current} z {total} | Wygenerowano {date}"
 	}

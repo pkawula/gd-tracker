@@ -16,6 +16,8 @@
 	"readings": {
 		"add": "Add Reading",
 		"adding": "Adding...",
+		"editLabel": "Edit Reading",
+		"editing": "Updating...",
 		"noReadings": "No readings found",
 		"noReadingsSubtext": "Add your first reading to get started",
 		"table": {
@@ -23,7 +25,18 @@
 			"type": "Type",
 			"glucose": "Glucose (mg/dL)",
 			"status": "Status",
-			"notes": "Notes"
+			"notes": "Notes",
+			"lastModified": "Last Modified",
+			"actions": "Actions"
+		},
+		"delete": {
+			"button": "Delete",
+			"confirm": "Are you sure you want to delete this reading?",
+			"error": "Failed to delete reading"
+		},
+		"edit": {
+			"button": "Edit",
+			"error": "Failed to update reading"
 		},
 		"status": {
 			"inRange": "✓ In Range",
@@ -44,6 +57,23 @@
 			"notLoggedIn": "You must be logged in to add a reading",
 			"invalidGlucose": "Glucose value must be between 0 and 500",
 			"measurementTypeRequired": "Measurement type is required"
+		}
+	},
+	"editReading": {
+		"title": "Edit Glucose Reading",
+		"glucoseLevel": "Glucose Level (mg/dL) *",
+		"glucosePlaceholder": "Enter glucose value",
+		"measurementType": "Measurement Type *",
+		"dateTime": "Date & Time *",
+		"notes": "Notes (Optional)",
+		"notesPlaceholder": "Add any relevant notes...",
+		"cancel": "Cancel",
+		"errors": {
+			"notLoggedIn": "You must be logged in to edit a reading",
+			"invalidGlucose": "Glucose value must be between 0 and 500",
+			"measurementTypeRequired": "Measurement type is required",
+			"notFound": "Reading not found",
+			"unauthorized": "You don't have permission to edit this reading"
 		}
 	},
 	"measurementTypes": {

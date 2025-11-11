@@ -4,11 +4,16 @@ import { pl, enUS } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { Trash2, Pencil } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface ReadingsTableProps {
 	readings: GlucoseReading[];
+	onDelete?: (id: string) => Promise<void>;
+	onEdit?: (reading: GlucoseReading) => void;
 }
 
 function getValueStatus(value: number, type: GlucoseReading["measurement_type"]) {
@@ -31,9 +36,24 @@ function getStatusColor(status: string) {
 	}
 }
 
-export function ReadingsTable({ readings }: ReadingsTableProps) {
+export function ReadingsTable({ readings, onDelete, onEdit }: ReadingsTableProps) {
 	const { t, language } = useTranslation();
 	const locale = language === "pl" ? pl : enUS;
+	const [deletingId, setDeletingId] = useState<string | null>(null);
+
+	const handleDelete = async (id: string) => {
+		if (!onDelete) return;
+		if (!confirm(t("readings.delete.confirm"))) return;
+
+		setDeletingId(id);
+		try {
+			await onDelete(id);
+		} catch (error) {
+			console.error("Failed to delete reading:", error);
+		} finally {
+			setDeletingId(null);
+		}
+	};
 
 	if (readings.length === 0) {
 		return (
@@ -57,11 +77,14 @@ export function ReadingsTable({ readings }: ReadingsTableProps) {
 							<TableHead className="w-[120px]">{t("readings.table.glucose")}</TableHead>
 							<TableHead className="w-[140px]">{t("readings.table.status")}</TableHead>
 							<TableHead>{t("readings.table.notes")}</TableHead>
+							<TableHead className="w-[160px]">{t("readings.table.lastModified")}</TableHead>
+							{(onDelete || onEdit) && <TableHead className="w-[100px] text-right">{t("readings.table.actions")}</TableHead>}
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{readings.map((reading) => {
 							const status = getValueStatus(reading.glucose_value, reading.measurement_type);
+							const lastModified = reading.updated_at || reading.created_at;
 							return (
 								<TableRow key={reading.id}>
 									<TableCell className="font-medium">{format(new Date(reading.measured_at), "MMM dd, yyyy HH:mm", { locale })}</TableCell>
@@ -81,6 +104,36 @@ export function ReadingsTable({ readings }: ReadingsTableProps) {
 										</Badge>
 									</TableCell>
 									<TableCell className="text-muted-foreground text-sm max-w-xs truncate">{reading.comment || "—"}</TableCell>
+									<TableCell className="text-muted-foreground text-sm">{format(new Date(lastModified), "MMM dd, yyyy HH:mm", { locale })}</TableCell>
+									{(onDelete || onEdit) && (
+										<TableCell className="text-right">
+											<div className="flex gap-1 justify-end">
+												{onEdit && (
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														onClick={() => onEdit(reading)}
+														aria-label={t("readings.edit.button")}
+														className="text-primary hover:text-primary hover:bg-primary/10"
+													>
+														<Pencil className="h-4 w-4" />
+													</Button>
+												)}
+												{onDelete && (
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														onClick={() => handleDelete(reading.id)}
+														disabled={deletingId === reading.id}
+														aria-label={t("readings.delete.button")}
+														className="text-destructive hover:text-destructive hover:bg-destructive/10"
+													>
+														<Trash2 className="h-4 w-4" />
+													</Button>
+												)}
+											</div>
+										</TableCell>
+									)}
 								</TableRow>
 							);
 						})}

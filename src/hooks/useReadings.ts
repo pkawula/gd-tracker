@@ -33,5 +33,33 @@ export function useReadings(dateRange: DateRange) {
 		fetchReadings();
 	}, [fetchReadings]);
 
-	return { readings, loading, error, refetch: fetchReadings };
+	const deleteReading = useCallback(async (id: string) => {
+		setError(null);
+		const { error: deleteError } = await supabase.from("glucose_readings").delete().eq("id", id);
+
+		if (deleteError) {
+			setError(deleteError.message);
+			throw deleteError;
+		}
+
+		setReadings((prev) => prev.filter((reading) => reading.id !== id));
+	}, []);
+
+	const updateReading = useCallback(async (id: string, updates: Partial<GlucoseReading>) => {
+		setError(null);
+		const { error: updateError } = await supabase
+			.from("glucose_readings")
+			.update(updates)
+			.eq("id", id);
+
+		if (updateError) {
+			setError(updateError.message);
+			throw updateError;
+		}
+
+		// Optimistically update the local state
+		setReadings((prev) => prev.map((reading) => (reading.id === id ? { ...reading, ...updates } : reading)));
+	}, []);
+
+	return { readings, loading, error, refetch: fetchReadings, deleteReading, updateReading };
 }

@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { Header } from "./Header";
-import { AddRecordDialog } from "./AddRecordDialog";
+import { AddRecordDialog, RecordDialog } from "./RecordDialog";
 import { ReadingsTable } from "./ReadingsTable";
 import { DateRangeFilter } from "./DateRangeFilter";
 import { ExportPDFButton } from "./ExportPDFButton";
 import { useReadings } from "@/hooks/useReadings";
 import { useTranslation } from "@/lib/i18n";
-import type { DateRange } from "@/types";
+import type { DateRange, GlucoseReading } from "@/types";
 import { startOfDay, subDays } from "date-fns";
 
 interface DashboardProps {
@@ -21,8 +21,33 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 		from: subDays(startOfDay(new Date()), 6),
 		to: startOfDay(new Date()),
 	});
+	const [editDialogOpen, setEditDialogOpen] = useState(false);
+	const [selectedReading, setSelectedReading] = useState<GlucoseReading | null>(null);
+	const scrollPositionRef = useRef<number>(0);
 
-	const { readings, loading, error, refetch } = useReadings(dateRange);
+	const { readings, loading, error, refetch, deleteReading } = useReadings(dateRange);
+
+	const handleEdit = (reading: GlucoseReading) => {
+		// Save current scroll position
+		scrollPositionRef.current = window.scrollY;
+		setSelectedReading(reading);
+		setEditDialogOpen(true);
+	};
+
+	const handleEditSuccess = () => {
+		setEditDialogOpen(false);
+		refetch().then(() => {
+			// Restore scroll position after a brief delay to allow DOM update
+			setTimeout(() => {
+				window.scrollTo({ top: scrollPositionRef.current, behavior: "instant" });
+			}, 100);
+		});
+		setSelectedReading(null);
+	};
+
+	const handleAddSuccess = () => {
+		refetch();
+	};
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -38,7 +63,7 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 						</div>
 						<div className="flex gap-2">
 							<ExportPDFButton readings={readings} dateRange={dateRange} />
-							<AddRecordDialog onSuccess={refetch} />
+							<AddRecordDialog onSuccess={handleAddSuccess} />
 						</div>
 					</div>
 
@@ -61,7 +86,18 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 					)}
 
 					{/* Readings Table */}
-					{!loading && <ReadingsTable readings={readings} />}
+					{!loading && <ReadingsTable readings={readings} onDelete={deleteReading} onEdit={handleEdit} />}
+
+					{/* Edit Dialog */}
+					{selectedReading && (
+						<RecordDialog
+							mode="edit"
+							reading={selectedReading}
+							open={editDialogOpen}
+							onOpenChange={setEditDialogOpen}
+							onSuccess={handleEditSuccess}
+						/>
+					)}
 				</div>
 			</main>
 		</div>
