@@ -16,7 +16,7 @@
 	"readings": {
 		"add": "Dodaj Odczyt",
 		"adding": "Dodawanie...",
-		"editLabel": "Edytuj Odczyt",
+		"editLabel": "Zapisz zmiany",
 		"editing": "Aktualizowanie...",
 		"noReadings": "Brak odczytów",
 		"noReadingsSubtext": "Dodaj pierwszy odczyt, aby rozpocząć",
@@ -101,7 +101,7 @@
 		"headers": {
 			"date": "Data",
 			"fasting": "Na czczo",
-			"meal": "Pos. {number}"
+			"meal": "Posiłek {number}"
 		},
 		"footer": "Strona {current} z {total} | Wygenerowano {date}"
 	}

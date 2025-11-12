@@ -12,12 +12,12 @@ interface ExportPDFButtonProps {
 export function ExportPDFButton({ readings, dateRange }: ExportPDFButtonProps) {
 	const { t, language } = useTranslation();
 
-	function handleExport() {
+	async function handleExport() {
 		if (readings.length === 0) {
 			alert(t("export.noReadings"));
 			return;
 		}
-		generatePDF(readings, dateRange, t, language);
+		await generatePDF(readings, dateRange, t, language);
 	}
 
 	return (
