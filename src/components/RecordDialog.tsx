@@ -134,6 +134,7 @@ export function RecordDialog({ mode, reading, onSuccess, trigger, open: controll
 	const { t } = useTranslation();
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [measurementType, setMeasurementType] = useState<MeasurementType>(reading?.measurement_type || "fasting");
+	const [datetimeKey, setDatetimeKey] = useState(0);
 	const formRef = useRef<HTMLFormElement>(null);
 
 	const isControlled = controlledOpen !== undefined;
@@ -152,8 +153,8 @@ export function RecordDialog({ mode, reading, onSuccess, trigger, open: controll
 		if (isEditMode && reading?.measured_at) {
 			return utcToLocalDatetime(reading.measured_at);
 		}
-		const now = new Date();
-		return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+		return utcToLocalDatetime(new Date().toISOString());
 	};
 
 	const actionWrapper = async (prevState: { error: string | null; success: boolean }, formData: FormData) => {
@@ -175,6 +176,8 @@ export function RecordDialog({ mode, reading, onSuccess, trigger, open: controll
 				setMeasurementType(reading.measurement_type);
 			} else {
 				setMeasurementType("fasting");
+				// Force remount of datetime input in add mode to recalculate default value
+				setDatetimeKey((prev) => prev + 1);
 			}
 		}
 	}, [open, isEditMode, reading]);
@@ -258,7 +261,14 @@ export function RecordDialog({ mode, reading, onSuccess, trigger, open: controll
 
 					<div className="space-y-2">
 						<Label htmlFor="measured_at">{t(`${translationPrefix}.dateTime`)}</Label>
-						<Input id="measured_at" name="measured_at" type="datetime-local" defaultValue={getDefaultDatetime()} required />
+						<Input
+							key={isEditMode ? reading?.id : `datetime-${datetimeKey}`}
+							id="measured_at"
+							name="measured_at"
+							type="datetime-local"
+							defaultValue={getDefaultDatetime()}
+							required
+						/>
 					</div>
 
 					<div className="space-y-2">
