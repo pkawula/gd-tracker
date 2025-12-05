@@ -1,14 +1,17 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { Header } from "./Header";
-import { AddRecordDialog, RecordDialog } from "./RecordDialog";
+import { RecordDialog } from "./RecordDialog";
 import { ReadingsTable } from "./ReadingsTable";
 import { DateRangeFilter } from "./DateRangeFilter";
 import { ExportPDFButton } from "./ExportPDFButton";
 import { useReadings } from "@/hooks/useReadings";
 import { useTranslation } from "@/lib/i18n";
+import { isMobileDevice } from "@/lib/utils";
 import type { DateRange, GlucoseReading } from "@/types";
 import { startOfDay, subDays } from "date-fns";
+import { Plus } from "lucide-react";
+import { Button } from "./ui/button";
 
 interface DashboardProps {
 	session: Session;
@@ -22,10 +25,16 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 		to: startOfDay(new Date()),
 	});
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
+	const [addDialogOpen, setAddDialogOpen] = useState(false);
 	const [selectedReading, setSelectedReading] = useState<GlucoseReading | null>(null);
+	const [isMobile, setIsMobile] = useState(false);
 	const scrollPositionRef = useRef<number>(0);
 
 	const { readings, loading, error, refetch, deleteReading } = useReadings(dateRange);
+
+	useEffect(() => {
+		setIsMobile(isMobileDevice());
+	}, []);
 
 	const handleEdit = (reading: GlucoseReading) => {
 		// Save current scroll position
@@ -46,6 +55,7 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 	};
 
 	const handleAddSuccess = () => {
+		setAddDialogOpen(false);
 		refetch();
 	};
 
@@ -63,7 +73,10 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 						</div>
 						<div className="flex gap-2">
 							<ExportPDFButton readings={readings} dateRange={dateRange} />
-							<AddRecordDialog onSuccess={handleAddSuccess} />
+							<Button size="lg" className="gap-2" onClick={() => setAddDialogOpen(true)}>
+								<Plus className="h-5 w-5" />
+								{t("readings.add")}
+							</Button>
 						</div>
 					</div>
 
@@ -98,8 +111,23 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 							onSuccess={handleEditSuccess}
 						/>
 					)}
+
+					{/* Add Dialog */}
+					<RecordDialog mode="add" open={addDialogOpen} onOpenChange={setAddDialogOpen} onSuccess={handleAddSuccess} />
 				</div>
 			</main>
+
+			{/* Floating Action Button - Mobile Devices Only */}
+			{isMobile && (
+				<Button
+					onClick={() => setAddDialogOpen(true)}
+					className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+					size="icon"
+					aria-label={t("readings.add")}
+				>
+					<Plus className="h-6 w-6" />
+				</Button>
+			)}
 		</div>
 	);
 }
