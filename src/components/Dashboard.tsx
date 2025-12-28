@@ -8,7 +8,7 @@ import { ExportPDFButton } from "./ExportPDFButton";
 import { useReadings } from "@/hooks/useReadings";
 import { useTranslation } from "@/lib/i18n";
 import { isMobileDevice } from "@/lib/utils";
-import type { DateRange, GlucoseReading } from "@/types";
+import type { DateRange, GlucoseReading, MeasurementType } from "@/types";
 import { startOfDay, subDays } from "date-fns";
 import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
@@ -59,6 +59,20 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 		refetch();
 	};
 
+	// Smart button logic
+	const now = new Date();
+	const isBeforeTenAM = now.getHours() < 10;
+
+	// Filter readings for today
+	const todayStart = startOfDay(new Date());
+	const hasReadingsToday = readings.some((r) => new Date(r.measured_at) >= todayStart);
+
+	// Determine smart button text
+	const addButtonText = !hasReadingsToday && isBeforeTenAM ? t("readings.addFasting") : t("readings.add");
+
+	// Determine prefill measurement type
+	const prefillMeasurementType: MeasurementType = isBeforeTenAM ? "fasting" : "1hr_after_meal";
+
 	return (
 		<div className="min-h-screen bg-background">
 			<Header userName={session.user.user_metadata.full_name || session.user.email} onSignOut={onSignOut} />
@@ -75,7 +89,7 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 							<ExportPDFButton readings={readings} dateRange={dateRange} />
 							<Button size="lg" className="gap-2" onClick={() => setAddDialogOpen(true)}>
 								<Plus className="h-5 w-5" />
-								{t("readings.add")}
+								{addButtonText}
 							</Button>
 						</div>
 					</div>
@@ -113,7 +127,13 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 					)}
 
 					{/* Add Dialog */}
-					<RecordDialog mode="add" open={addDialogOpen} onOpenChange={setAddDialogOpen} onSuccess={handleAddSuccess} />
+					<RecordDialog
+						mode="add"
+						open={addDialogOpen}
+						onOpenChange={setAddDialogOpen}
+						onSuccess={handleAddSuccess}
+						initialMeasurementType={prefillMeasurementType}
+					/>
 				</div>
 			</main>
 
@@ -123,7 +143,7 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 					onClick={() => setAddDialogOpen(true)}
 					className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
 					size="icon"
-					aria-label={t("readings.add")}
+					aria-label={addButtonText}
 				>
 					<Plus className="h-6 w-6" />
 				</Button>

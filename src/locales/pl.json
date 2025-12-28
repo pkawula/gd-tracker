@@ -15,6 +15,7 @@
 	},
 	"readings": {
 		"add": "Dodaj Odczyt",
+		"addFasting": "Dodaj odczyt na czczo",
 		"adding": "Dodawanie...",
 		"editLabel": "Zapisz zmiany",
 		"editing": "Aktualizowanie...",

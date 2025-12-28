@@ -128,12 +128,13 @@ interface RecordDialogProps {
 	trigger?: React.ReactNode;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	initialMeasurementType?: MeasurementType;
 }
 
-export function RecordDialog({ mode, reading, onSuccess, trigger, open: controlledOpen, onOpenChange }: RecordDialogProps) {
+export function RecordDialog({ mode, reading, onSuccess, trigger, open: controlledOpen, onOpenChange, initialMeasurementType }: RecordDialogProps) {
 	const { t } = useTranslation();
 	const [internalOpen, setInternalOpen] = useState(false);
-	const [measurementType, setMeasurementType] = useState<MeasurementType>(reading?.measurement_type || "fasting");
+	const [measurementType, setMeasurementType] = useState<MeasurementType>(reading?.measurement_type || initialMeasurementType || "fasting");
 	const [datetimeKey, setDatetimeKey] = useState(0);
 	const formRef = useRef<HTMLFormElement>(null);
 
@@ -175,12 +176,12 @@ export function RecordDialog({ mode, reading, onSuccess, trigger, open: controll
 			if (isEditMode && reading) {
 				setMeasurementType(reading.measurement_type);
 			} else {
-				setMeasurementType("fasting");
+				setMeasurementType(initialMeasurementType || "fasting");
 				// Force remount of datetime input in add mode to recalculate default value
 				setDatetimeKey((prev) => prev + 1);
 			}
 		}
-	}, [open, isEditMode, reading]);
+	}, [open, isEditMode, reading, initialMeasurementType]);
 
 	useEffect(() => {
 		if (state.success) {

@@ -15,6 +15,7 @@
 	},
 	"readings": {
 		"add": "Add Reading",
+		"addFasting": "Add fasting record",
 		"adding": "Adding...",
 		"editLabel": "Edit Reading",
 		"editing": "Updating...",
