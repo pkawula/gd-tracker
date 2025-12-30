@@ -1,29 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "./lib/supabase";
 import Dashboard from "./components/Dashboard";
 import { Button } from "./components/ui/button";
 import { useTranslation } from "@/lib/i18n";
 import type { Session } from "@supabase/supabase-js";
+import { useOneSignal } from "./lib/one-signal";
 
 function App() {
 	const { t } = useTranslation();
 	const [session, setSession] = useState<Session | null>(null);
 	const [loading, setLoading] = useState(true);
+	const currentUserIdRef = useRef<string | null>(null);
+
+	const { loginUserToOneSignal, logoutUserFromOneSignal } = useOneSignal();
 
 	useEffect(() => {
+		// Get initial session
 		supabase.auth.getSession().then(({ data: { session } }) => {
 			setSession(session);
 			setLoading(false);
 		});
 
+		// Listen to auth changes
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange((_event, session) => {
 			setSession(session);
+
+			const newUserId = session?.user.id ?? null;
+
+			// Only update OneSignal if the user actually changed
+			if (newUserId !== currentUserIdRef.current) {
+				currentUserIdRef.current = newUserId;
+
+				if (session) {
+					loginUserToOneSignal(session.user.id);
+				} else {
+					logoutUserFromOneSignal();
+				}
+			}
 		});
 
 		return () => subscription.unsubscribe();
-	}, []);
+	}, [loginUserToOneSignal, logoutUserFromOneSignal]);
 
 	async function handleSignIn() {
 		await supabase.auth.signInWithOAuth({

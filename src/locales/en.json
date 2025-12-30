@@ -105,5 +105,19 @@
 			"meal": "Meal {number}"
 		},
 		"footer": "Page {current} of {total} | Generated on {date}"
+	},
+	"notifications": {
+		"prompt": {
+			"message": "Get notified about glucose measurement reminders and important updates",
+			"allow": "Allow",
+			"notNow": "Not Now",
+			"enable": "Enable Notifications",
+			"disable": "Disable Notifications",
+			"explanation": "Get measurement reminders"
+		},
+		"categories": {
+			"reminders": "Measurement Reminders",
+			"updates": "Updates"
+		}
 	}
 }

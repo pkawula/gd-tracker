@@ -105,5 +105,19 @@
 			"meal": "Posiłek {number}"
 		},
 		"footer": "Strona {current} z {total} | Wygenerowano {date}"
+	},
+	"notifications": {
+		"prompt": {
+			"message": "Otrzymuj powiadomienia o przypomnieniach dotyczących pomiarów glukozy i ważnych aktualizacjach",
+			"allow": "Zezwól",
+			"notNow": "Nie teraz",
+			"enable": "Włącz powiadomienia",
+			"disable": "Wyłącz powiadomienia",
+			"explanation": "Otrzymuj przypomnienia o pomiarach"
+		},
+		"categories": {
+			"reminders": "Przypomnienia o pomiarach",
+			"updates": "Aktualizacje"
+		}
 	}
 }
