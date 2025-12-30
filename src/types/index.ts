@@ -11,6 +11,13 @@ export interface GlucoseReading {
 	updated_at?: string;
 }
 
+export interface UserSettings {
+	user_id: string;
+	push_notifications_enabled: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface DateRange {
 	from: Date;
 	to: Date;

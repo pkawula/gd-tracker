@@ -115,9 +115,23 @@
 			"disable": "Disable Notifications",
 			"explanation": "Get measurement reminders"
 		},
+		"welcome": {
+			"message": "Thanks for subscribing to notifications!",
+			"title": "GD Tracker Notifications"
+		},
 		"categories": {
 			"reminders": "Measurement Reminders",
 			"updates": "Updates"
+		}
+	},
+	"settings": {
+		"title": "Settings",
+		"notifications": {
+			"label": "Push Notifications",
+			"description": "Receive reminders and updates",
+			"enabled": "Notifications enabled",
+			"disabled": "Notifications disabled",
+			"error": "Failed to update notification settings"
 		}
 	}
 }

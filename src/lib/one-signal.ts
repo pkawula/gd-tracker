@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import OneSignal from "react-onesignal";
 import { useTranslation } from "./i18n";
+import { supabase } from "./supabase";
 
 export const useOneSignal = () => {
   const serviceInitialized = useRef(false);
@@ -38,6 +39,11 @@ export const useOneSignal = () => {
           serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
           serviceWorkerParam: { scope: "/push/onesignal/js/" },
           allowLocalhostAsSecureOrigin: import.meta.env.DEV,
+          welcomeNotification: {
+            message: t("notifications.welcome.message"),
+            title: t("notifications.welcome.title"),
+            url: window.location.origin,
+          },
           promptOptions: {
             slidedown: {
               prompts: [
@@ -76,6 +82,68 @@ export const useOneSignal = () => {
 
         serviceInitialized.current = true;
         setIsReady(true);
+
+        // Register permission change listener to sync with Supabase
+        OneSignal.Notifications.addEventListener("permissionChange", async (granted) => {
+          try {
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+
+            if (!user) return;
+
+            // When user grants permission, update settings in Supabase
+            if (granted) {
+              const { error } = await supabase
+                .from("user_settings")
+                .upsert(
+                  {
+                    user_id: user.id,
+                    push_notifications_enabled: true,
+                  },
+                  {
+                    onConflict: "user_id",
+                  }
+                );
+
+              if (error && import.meta.env.DEV) {
+                console.error("Error syncing permission to Supabase:", error);
+              }
+            }
+          } catch (error) {
+            if (import.meta.env.DEV) {
+              console.error("Error in permission change handler:", error);
+            }
+          }
+        });
+
+        // Check initial permission state and sync to DB
+        const initialPermission = OneSignal.Notifications.permission;
+        if (initialPermission) {
+          try {
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+
+            if (user) {
+              await supabase
+                .from("user_settings")
+                .upsert(
+                  {
+                    user_id: user.id,
+                    push_notifications_enabled: initialPermission,
+                  },
+                  {
+                    onConflict: "user_id",
+                  }
+                );
+            }
+          } catch (error) {
+            if (import.meta.env.DEV) {
+              console.error("Error syncing initial permission:", error);
+            }
+          }
+        }
 
         // Apply custom styling to match project UI
         // We'll inject styles after OneSignal loads to ensure proper override

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "./lib/supabase";
 import Dashboard from "./components/Dashboard";
 import { Button } from "./components/ui/button";
+import { Toaster } from "./components/ui/sonner";
 import { useTranslation } from "@/lib/i18n";
 import type { Session } from "@supabase/supabase-js";
 import { useOneSignal } from "./lib/one-signal";
@@ -99,7 +100,12 @@ function App() {
 		);
 	}
 
-	return <Dashboard onSignOut={handleSignOut} session={session} />;
+	return (
+		<>
+			<Dashboard onSignOut={handleSignOut} session={session} />
+			<Toaster />
+		</>
+	);
 }
 
 export default App;

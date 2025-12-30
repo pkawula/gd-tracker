@@ -118,6 +118,20 @@
 		"categories": {
 			"reminders": "Przypomnienia o pomiarach",
 			"updates": "Aktualizacje"
+		},
+		"welcome": {
+			"message": "Dziękujemy za subskrypcję powiadomień!",
+			"title": "Powiadomienia GD Tracker"
+		}
+	},
+	"settings": {
+		"title": "Ustawienia",
+		"notifications": {
+			"label": "Powiadomienia Push",
+			"description": "Otrzymuj przypomnienia i aktualizacje",
+			"enabled": "Powiadomienia włączone",
+			"disabled": "Powiadomienia wyłączone",
+			"error": "Nie udało się zaktualizować ustawień powiadomień"
 		}
 	}
 }
