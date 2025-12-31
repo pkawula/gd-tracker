@@ -36,7 +36,7 @@ export const useOneSignal = () => {
         initializationPromise.current = OneSignal.init({
           appId,
           safari_web_id: import.meta.env.VITE_ONESIGNAL_SAFARI_WEB_ID,
-          serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
+          serviceWorkerPath: "/push/onesignal/OneSignalSDKWorker.js",
           serviceWorkerParam: { scope: "/push/onesignal/js/" },
           allowLocalhostAsSecureOrigin: import.meta.env.DEV,
           welcomeNotification: {
