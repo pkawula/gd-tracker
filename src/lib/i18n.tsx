@@ -16,6 +16,7 @@ interface I18nContextType {
 	language: Language;
 	setLanguage: (lang: Language) => void;
 	t: (key: TranslationKey, params?: Record<string, string | number>) => string;
+	syncLanguage: (lang: Language) => void;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
@@ -76,6 +77,12 @@ export function I18nProvider({ children }: I18nProviderProps) {
 		setLanguageState(lang);
 	}
 
+	// Sync language from database without triggering storage update
+	function syncLanguage(lang: Language) {
+		setLanguageState(lang);
+		localStorage.setItem(STORAGE_KEY, lang);
+	}
+
 	function t(key: TranslationKey, params?: Record<string, string | number>): string {
 		const translation = getNestedValue(translations[language], key);
 		if (translation) {
@@ -92,7 +99,7 @@ export function I18nProvider({ children }: I18nProviderProps) {
 		return key;
 	}
 
-	return <I18nContext.Provider value={{ language, setLanguage, t }}>{children}</I18nContext.Provider>;
+	return <I18nContext.Provider value={{ language, setLanguage, t, syncLanguage }}>{children}</I18nContext.Provider>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

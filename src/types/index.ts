@@ -14,6 +14,7 @@ export interface GlucoseReading {
 export interface UserSettings {
 	user_id: string;
 	push_notifications_enabled: boolean;
+	language: "en" | "pl";
 	created_at: string;
 	updated_at: string;
 }

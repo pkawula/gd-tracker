@@ -8,6 +8,7 @@ interface UseUserSettingsReturn {
 	loading: boolean;
 	error: Error | null;
 	updateSettings: (enabled: boolean) => Promise<void>;
+	updateLanguage: (language: "en" | "pl") => Promise<void>;
 }
 
 export const useUserSettings = (): UseUserSettingsReturn => {
@@ -42,9 +43,14 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 
 				// If no settings exist, create default settings
 				if (!existingSettings) {
+					// Detect browser language
+					const browserLang = navigator.language.toLowerCase();
+					const defaultLanguage = browserLang.startsWith("pl") ? "pl" : "en";
+
 					const newSettings: Partial<UserSettings> = {
 						user_id: user.id,
 						push_notifications_enabled: false,
+						language: defaultLanguage,
 					};
 
 					const { data: createdSettings, error: createError } = await supabase
@@ -133,11 +139,44 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 		[]
 	);
 
+	const updateLanguage = useCallback(
+		async (language: "en" | "pl") => {
+			try {
+				const {
+					data: { user },
+				} = await supabase.auth.getUser();
+
+				if (!user) {
+					throw new Error("User not authenticated");
+				}
+
+				// Update Supabase
+				const { data: updatedSettings, error: updateError } = await supabase
+					.from("user_settings")
+					.update({ language })
+					.eq("user_id", user.id)
+					.select()
+					.single();
+
+				if (updateError) throw updateError;
+
+				setSettings(updatedSettings);
+			} catch (err) {
+				if (import.meta.env.DEV) {
+					console.error("Error updating language setting:", err);
+				}
+				throw err;
+			}
+		},
+		[]
+	);
+
 	return {
 		settings,
 		loading,
 		error,
 		updateSettings,
+		updateLanguage,
 	};
 };
 

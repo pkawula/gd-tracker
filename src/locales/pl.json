@@ -122,6 +122,16 @@
 		"welcome": {
 			"message": "Dziękujemy za subskrypcję powiadomień!",
 			"title": "Powiadomienia GD Tracker"
+		},
+		"reminders": {
+			"fasting": {
+				"heading": "🩸 Przypomnienie o pomiarze na czczo",
+				"content": "Czas zmierzyć poziom glukozy na czczo"
+			},
+			"1hr_after_meal": {
+				"heading": "🩸 Przypomnienie o pomiarze po posiłku",
+				"content": "Czas zmierzyć poziom glukozy (1h po posiłku)"
+			}
 		}
 	},
 	"settings": {

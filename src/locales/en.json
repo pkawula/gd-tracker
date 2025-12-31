@@ -122,6 +122,16 @@
 		"categories": {
 			"reminders": "Measurement Reminders",
 			"updates": "Updates"
+		},
+		"reminders": {
+			"fasting": {
+				"heading": "🩸 Fasting Glucose Reminder",
+				"content": "Time to measure your fasting glucose level"
+			},
+			"1hr_after_meal": {
+				"heading": "🩸 Post-Meal Glucose Reminder",
+				"content": "Time to measure your glucose level (1hr after meal)"
+			}
 		}
 	},
 	"settings": {
