@@ -25,8 +25,9 @@
 }
 /**
  * Get Monday of next week (for scheduling target week)
- */ function getNextMondayUTC() {
-  const now = new Date();
+ * @param fromDate Optional date to calculate from (for manual runs)
+ */ function getNextMondayUTC(fromDate) {
+  const now = fromDate || new Date();
   const warsaw = toWarsawTime(now);
   const dayOfWeek = warsaw.getDay();
   const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
@@ -34,6 +35,19 @@
   nextMonday.setDate(warsaw.getDate() + daysUntilNextMonday);
   nextMonday.setHours(0, 0, 0, 0);
   return toUTC(nextMonday);
+}
+
+/**
+ * Get the Monday of the current week (for mid-week manual runs)
+ */ function getCurrentMondayUTC() {
+  const now = new Date();
+  const warsaw = toWarsawTime(now);
+  const dayOfWeek = warsaw.getDay();
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 6 days back, Monday = 0, etc.
+  const currentMonday = new Date(warsaw);
+  currentMonday.setDate(warsaw.getDate() - daysToSubtract);
+  currentMonday.setHours(0, 0, 0, 0);
+  return toUTC(currentMonday);
 }
 /**
  * Calculate median of an array of numbers
@@ -138,15 +152,22 @@ Deno.serve(async (req)=>{
         }
       });
     }
+    
+    // Check for week parameter (current or next)
+    const url = new URL(req.url);
+    const weekParam = url.searchParams.get('week') || 'next'; // 'current' or 'next'
+    
     const supabase = createServiceClient();
-    const nextMonday = getNextMondayUTC();
-    const nextMondayStr = nextMonday.toISOString().split('T')[0];
+    const targetMonday = weekParam === 'current' ? getCurrentMondayUTC() : getNextMondayUTC();
+    const targetMondayStr = targetMonday.toISOString().split('T')[0];
+    
     // Check if this week was already processed
-    const { data: existingRun } = await supabase.from('notification_schedule_runs').select('id').eq('run_week_start_date', nextMondayStr).single();
+    const { data: existingRun } = await supabase.from('notification_schedule_runs').select('id').eq('run_week_start_date', targetMondayStr).single();
     if (existingRun) {
       return new Response(JSON.stringify({
         message: 'Week already scheduled',
-        week: nextMondayStr
+        week: targetMondayStr,
+        hint: weekParam === 'next' ? 'Use ?week=current to schedule current week' : 'Delete the run record to re-schedule'
       }), {
         status: 200,
         headers: {
@@ -156,7 +177,7 @@ Deno.serve(async (req)=>{
     }
     // Create run record
     const { data: runRecord, error: runError } = await supabase.from('notification_schedule_runs').insert({
-      run_week_start_date: nextMondayStr,
+      run_week_start_date: targetMondayStr,
       status: 'running'
     }).select('id').single();
     if (runError) throw runError;
@@ -215,11 +236,11 @@ Deno.serve(async (req)=>{
         }
       }
       // Compute schedules
-      const schedules = computeScheduleTimes(patterns, nextMonday);
-      // Delete existing schedules for next week (idempotency)
-      const weekEnd = new Date(nextMonday);
+      const schedules = computeScheduleTimes(patterns, targetMonday);
+      // Delete existing schedules for target week (idempotency)
+      const weekEnd = new Date(targetMonday);
       weekEnd.setDate(weekEnd.getDate() + 7);
-      await supabase.from('notification_schedules').delete().gte('scheduled_at', nextMonday.toISOString()).lt('scheduled_at', weekEnd.toISOString());
+      await supabase.from('notification_schedules').delete().gte('scheduled_at', targetMonday.toISOString()).lt('scheduled_at', weekEnd.toISOString());
       // Insert new schedules (batch insert)
       if (schedules.length > 0) {
         const { error: insertError } = await supabase.from('notification_schedules').insert(schedules);
@@ -234,7 +255,7 @@ Deno.serve(async (req)=>{
       }).eq('id', runRecord.id);
       return new Response(JSON.stringify({
         message: 'Successfully scheduled reminders',
-        week: nextMondayStr,
+        week: targetMondayStr,
         users_processed: processedUsers,
         schedules_created: schedules.length
       }), {
