@@ -113,37 +113,17 @@ export function createServiceClient() {
 }
 
 /**
- * Decode base64 string safely
- */
-function tryDecodeBase64(str: string): string {
-  try {
-    const decoded = atob(str);
-    // Verify decoded string is valid (printable ASCII or valid UTF-8)
-    if (decoded && decoded.length > 0) {
-      return decoded;
-    }
-  } catch {
-    // Not valid base64 or decoding failed
-  }
-  return str;
-}
-
-/**
  * Validate that request includes correct authorization secret
  * Prevents unauthorized access to Edge Functions from pg_cron
  * 
  * Note: Automatically handles base64-encoded secrets in environment variables
  */
 export function validateCronSecret(request: Request): boolean {
-  const rawSecret = Deno.env.get('CRON_EDGE_FUNCTION_SECRET');
+  const expectedSecret = Deno.env.get('CRON_EDGE_FUNCTION_SECRET');
   
-  if (!rawSecret) {
+  if (!expectedSecret) {
     throw new Error('CRON_EDGE_FUNCTION_SECRET not configured');
   }
-
-  // Decode if the secret is base64 encoded
-  // Supabase may store secrets encoded in some environments
-  const expectedSecret = tryDecodeBase64(rawSecret);
 
   // Check custom header first (used by pg_cron)
   const cronHeader = request.headers.get('x-cron-secret');

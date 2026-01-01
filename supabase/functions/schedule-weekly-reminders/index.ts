@@ -6,48 +6,50 @@
  * 
  * Runs: Once per week (Sunday 02:00 Europe/Warsaw)
  * Triggered by: pg_cron job via HTTP POST
- */ import { createServiceClient, validateCronSecret } from '../_shared/db.ts';
-/**
- * Convert UTC timestamp to Europe/Warsaw local time
- */ function toWarsawTime(utcDate) {
-  return new Date(utcDate.toLocaleString('en-US', {
-    timeZone: 'Europe/Warsaw'
-  }));
-}
-/**
- * Convert Europe/Warsaw local time to UTC
- */ function toUTC(warsawDate) {
-  const localStr = warsawDate.toLocaleString('en-US', {
-    timeZone: 'Europe/Warsaw'
-  });
-  const utcStr = new Date(localStr).toISOString();
-  return new Date(utcStr);
-}
+ */
+import { createServiceClient, validateCronSecret } from '../_shared/db.ts';
+import { toZonedTime, fromZonedTime } from 'npm:date-fns-tz@3.1.3';
+
+const TIMEZONE = 'Europe/Warsaw';
 /**
  * Get Monday of next week (for scheduling target week)
+ * Returns UTC timestamp for Monday 00:00:00 in Warsaw timezone
  * @param fromDate Optional date to calculate from (for manual runs)
- */ function getNextMondayUTC(fromDate) {
+ */
+function getNextMondayUTC(fromDate) {
   const now = fromDate || new Date();
-  const warsaw = toWarsawTime(now);
+  // Convert UTC to Warsaw time to determine day of week
+  const warsaw = toZonedTime(now, TIMEZONE);
   const dayOfWeek = warsaw.getDay();
   const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+  
+  // Calculate next Monday in Warsaw timezone
   const nextMonday = new Date(warsaw);
   nextMonday.setDate(warsaw.getDate() + daysUntilNextMonday);
   nextMonday.setHours(0, 0, 0, 0);
-  return toUTC(nextMonday);
+  
+  // Convert Warsaw local time back to UTC
+  return fromZonedTime(nextMonday, TIMEZONE);
 }
 
 /**
  * Get the Monday of the current week (for mid-week manual runs)
- */ function getCurrentMondayUTC() {
+ * Returns UTC timestamp for Monday 00:00:00 in Warsaw timezone
+ */
+function getCurrentMondayUTC() {
   const now = new Date();
-  const warsaw = toWarsawTime(now);
+  // Convert UTC to Warsaw time to determine day of week
+  const warsaw = toZonedTime(now, TIMEZONE);
   const dayOfWeek = warsaw.getDay();
   const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 6 days back, Monday = 0, etc.
+  
+  // Calculate current Monday in Warsaw timezone
   const currentMonday = new Date(warsaw);
   currentMonday.setDate(warsaw.getDate() - daysToSubtract);
   currentMonday.setHours(0, 0, 0, 0);
-  return toUTC(currentMonday);
+  
+  // Convert Warsaw local time back to UTC
+  return fromZonedTime(currentMonday, TIMEZONE);
 }
 /**
  * Calculate median of an array of numbers
@@ -78,49 +80,71 @@
 }
 /**
  * Compute scheduled times for a user's measurement type + day-of-week
- */ function computeScheduleTimes(patterns, nextMondayUTC) {
+ */
+function computeScheduleTimes(patterns, nextMondayUTC) {
   const schedules = [];
+  
   // Group by user, type, and day-of-week
   const grouped = new Map();
-  for (const pattern of patterns){
+  for (const pattern of patterns) {
     const key = `${pattern.user_id}|${pattern.measurement_type}|${pattern.day_of_week}`;
     if (!grouped.has(key)) {
       grouped.set(key, []);
     }
     grouped.get(key).push(pattern);
   }
+  
   // For each group, compute reminder times
-  for (const [key, groupPatterns] of grouped.entries()){
+  for (const [key, groupPatterns] of grouped.entries()) {
     const [userId, measurementType, dowStr] = key.split('|');
     const dayOfWeek = parseInt(dowStr);
-    // Collect all minutes
+    
+    // Collect all minutes and track unique dates
     const allMinutes = [];
-    for (const p of groupPatterns){
+    const uniqueDates = new Set();
+    for (const p of groupPatterns) {
       allMinutes.push(...p.minutes_of_day);
+      if (p.date) {
+        uniqueDates.add(p.date);
+      }
     }
+    
     if (allMinutes.length === 0) continue;
+    
     // Find top bins
     const topBins = clusterReadings(allMinutes, 15);
-    // Determine number of reminders (use average count per day)
-    const avgPerDay = Math.round(allMinutes.length / 2); // 2 weeks of data
-    const remindersCount = Math.min(Math.max(1, avgPerDay), topBins.length);
+    
+    // Calculate average readings per day (based on actual day occurrences)
+    const numDaysWithReadings = uniqueDates.size > 0 ? uniqueDates.size : Math.max(1, Math.ceil(allMinutes.length / 6));
+    const avgPerDay = Math.round(allMinutes.length / numDaysWithReadings);
+    
+    // Cap reminders: max 6 per day, min 1
+    const remindersCount = Math.min(Math.max(1, avgPerDay), 6, topBins.length);
+    
     // Create schedules for top bins
-    for(let i = 0; i < remindersCount; i++){
+    for (let i = 0; i < remindersCount; i++) {
       const binStart = topBins[i];
+      
       // Find readings in this bin
       const binEnd = binStart + 15;
-      const binReadings = allMinutes.filter((m)=>m >= binStart && m < binEnd);
+      const binReadings = allMinutes.filter((m) => m >= binStart && m < binEnd);
+      
       // Compute median + 5 minutes
       const targetMinute = Math.round(median(binReadings)) + 5;
-      // Create timestamp for next week's day
-      const targetDate = new Date(nextMondayUTC);
+      
+      // Create timestamp for next week's day in Warsaw timezone
+      // Start with next Monday in Warsaw time
+      const warsawMonday = toZonedTime(nextMondayUTC, TIMEZONE);
       const daysToAdd = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Adjust for Monday=0 base
-      targetDate.setDate(targetDate.getDate() + daysToAdd);
-      // Set time in Warsaw timezone
-      const warsawDate = toWarsawTime(targetDate);
-      warsawDate.setHours(Math.floor(targetMinute / 60), targetMinute % 60, 0, 0);
-      // Convert back to UTC
-      const utcTimestamp = toUTC(warsawDate);
+      
+      // Create the target date in Warsaw timezone
+      const warsawTargetDate = new Date(warsawMonday);
+      warsawTargetDate.setDate(warsawMonday.getDate() + daysToAdd);
+      warsawTargetDate.setHours(Math.floor(targetMinute / 60), targetMinute % 60, 0, 0);
+      
+      // Convert Warsaw local time to UTC
+      const utcTimestamp = fromZonedTime(warsawTargetDate, TIMEZONE);
+      
       schedules.push({
         user_id: userId,
         measurement_type: measurementType,
@@ -128,6 +152,7 @@
       });
     }
   }
+  
   return schedules;
 }
 Deno.serve(async (req)=>{
@@ -183,8 +208,6 @@ Deno.serve(async (req)=>{
     if (runError) throw runError;
     try {
       // Fetch eligible users (notifications enabled, has at least 7 days of activity)
-      const twoWeeksAgo = new Date();
-      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
       const { data: eligibleUsers, error: usersError } = await supabase.from('user_settings').select('user_id').eq('push_notifications_enabled', true);
       if (usersError) throw usersError;
       if (!eligibleUsers || eligibleUsers.length === 0) {
@@ -209,7 +232,22 @@ Deno.serve(async (req)=>{
       let processedUsers = 0;
       // Fetch readings for each user and analyze patterns
       for (const user of eligibleUsers){
-        const { data: readings, error: readingsError } = await supabase.from('glucose_readings').select('measured_at, measurement_type').eq('user_id', user.user_id).gte('measured_at', twoWeeksAgo.toISOString()).order('measured_at', {
+        // Check if user has been scheduled before (first-time vs returning)
+        const { data: previousSchedules } = await supabase
+          .from('notification_schedules')
+          .select('id')
+          .eq('user_id', user.user_id)
+          .limit(1);
+        
+        const isFirstTime = !previousSchedules || previousSchedules.length === 0;
+        
+        // First-time users: 60-day lookback for accuracy
+        // Returning users: 7-day lookback for recent pattern adaptation
+        const lookbackDays = isFirstTime ? 60 : 7;
+        const lookbackDate = new Date();
+        lookbackDate.setDate(lookbackDate.getDate() - lookbackDays);
+        
+        const { data: readings, error: readingsError } = await supabase.from('glucose_readings').select('measured_at, measurement_type').eq('user_id', user.user_id).gte('measured_at', lookbackDate.toISOString()).order('measured_at', {
           ascending: true
         });
         if (readingsError || !readings || readings.length === 0) continue;
@@ -220,18 +258,20 @@ Deno.serve(async (req)=>{
         if (daySpan < 7) continue;
         processedUsers++;
         // Extract patterns
-        for (const reading of readings){
+        for (const reading of readings) {
           const utcDate = new Date(reading.measured_at);
-          const warsawDate = toWarsawTime(utcDate);
+          // Convert UTC to Warsaw time to extract local time components
+          const warsawDate = toZonedTime(utcDate, TIMEZONE);
           const dayOfWeek = warsawDate.getDay();
           const minuteOfDay = warsawDate.getHours() * 60 + warsawDate.getMinutes();
+          const dateStr = warsawDate.toISOString().split('T')[0]; // YYYY-MM-DD
+          
           patterns.push({
             user_id: user.user_id,
             measurement_type: reading.measurement_type,
             day_of_week: dayOfWeek,
-            minutes_of_day: [
-              minuteOfDay
-            ]
+            date: dateStr, // Track the actual date
+            minutes_of_day: [minuteOfDay]
           });
         }
       }
