@@ -166,13 +166,7 @@ Deno.serve(async (req) => {
     
     const { data: dueSchedules, error: fetchError } = await supabase
       .from('notification_schedules')
-      .select(`
-        id,
-        user_id,
-        measurement_type,
-        scheduled_at,
-        user_settings!inner(language)
-      `)
+      .select('id, user_id, measurement_type, scheduled_at')
       .eq('status', 'scheduled')
       .lte('scheduled_at', now.toISOString())
       .gte('scheduled_at', graceStart.toISOString())
@@ -190,13 +184,30 @@ Deno.serve(async (req) => {
       });
     }
     
-    // Transform data structure (join result)
-    const schedules: DueSchedule[] = dueSchedules.map((s: DueSchedule) => ({
+    // Fetch user settings for all unique user_ids
+    const uniqueUserIds = [...new Set(dueSchedules.map(s => s.user_id))];
+    const { data: userSettings, error: settingsError } = await supabase
+      .from('user_settings')
+      .select('user_id, language')
+      .in('user_id', uniqueUserIds);
+    
+    if (settingsError) throw settingsError;
+    
+    // Create a map for quick language lookup
+    const languageMap = new Map<string, 'en' | 'pl'>();
+    if (userSettings) {
+      for (const setting of userSettings) {
+        languageMap.set(setting.user_id, setting.language || 'en');
+      }
+    }
+    
+    // Transform data structure with language from map
+    const schedules: DueSchedule[] = dueSchedules.map((s) => ({
       id: s.id,
       user_id: s.user_id,
       measurement_type: s.measurement_type,
       scheduled_at: s.scheduled_at,
-      language: s.user_settings?.language || 'en',
+      language: languageMap.get(s.user_id) || 'en',
     }));
     
     // Process each schedule
