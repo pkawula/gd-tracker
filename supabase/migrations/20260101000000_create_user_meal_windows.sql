@@ -5,7 +5,7 @@
 
 -- Create table to store user-configurable meal time windows
 create table user_meal_windows (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   day_of_week int not null check (day_of_week between 0 and 6),
   measurement_type text not null check (measurement_type in ('fasting', '1hr_after_meal')),
