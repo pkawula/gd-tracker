@@ -136,12 +136,46 @@
 	},
 	"settings": {
 		"title": "Settings",
+		"tabs": {
+			"general": "General",
+			"mealWindows": "Meal Times"
+		},
 		"notifications": {
 			"label": "Push Notifications",
 			"description": "Receive reminders and updates",
 			"enabled": "Notifications enabled",
 			"disabled": "Notifications disabled",
 			"error": "Failed to update notification settings"
+		}
+	},
+	"mealWindows": {
+		"title": "Meal Time Windows",
+		"description": "Set your typical meal times to receive accurate reminders. Only measurements within these windows will be used for scheduling.",
+		"selectDay": "Select Day",
+		"timeStart": "Start Time",
+		"timeEnd": "End Time",
+		"mealLabel": "Meal {number} (1hr after)",
+		"resetToDefaults": "Reset to Defaults",
+		"resetSuccess": "Meal windows reset to defaults",
+		"days": {
+			"sunday": "Sun",
+			"monday": "Mon",
+			"tuesday": "Tue",
+			"wednesday": "Wed",
+			"thursday": "Thu",
+			"friday": "Fri",
+			"saturday": "Sat"
+		},
+		"errors": {
+			"invalidTimeFormat": "Invalid time format. Use HH:MM",
+			"updateFailed": "Failed to update meal window",
+			"resetFailed": "Failed to reset to defaults"
+		},
+		"help": {
+			"title": "How Meal Windows Work",
+			"point1": "Set the time range when you typically measure each type (e.g., fasting: 7:30-9:00)",
+			"point2": "Measurements outside these windows will be ignored for reminder scheduling",
+			"point3": "This helps filter out late entries and improves reminder accuracy"
 		}
 	}
 }

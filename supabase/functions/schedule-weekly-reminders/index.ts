@@ -9,6 +9,15 @@
  */
 import { createServiceClient, validateCronSecret } from '../_shared/db.ts';
 import { toZonedTime, fromZonedTime } from 'npm:date-fns-tz@3.1.3';
+import {
+  filterReadingsByMealWindows,
+  filterOutliers,
+  enforceMinimumSpacing,
+  adjustSchedulesToMealWindows,
+  fillMissingMealWindowReminders,
+  type MealWindow,
+  type Reading
+} from './filtering.ts';
 
 const TIMEZONE = 'Europe/Warsaw';
 /**
@@ -78,10 +87,24 @@ function getCurrentMondayUTC() {
   const sortedBins = Array.from(bins.entries()).sort((a, b)=>b[1] - a[1]).map(([binKey])=>binKey);
   return sortedBins;
 }
+
+/**
+ * Extract measurement types used by a specific user from patterns
+ */
+function getUserMeasurementTypes(patterns, userId) {
+  const types = new Set();
+  for (const pattern of patterns) {
+    if (pattern.user_id === userId) {
+      types.add(pattern.measurement_type);
+    }
+  }
+  return types;
+}
+
 /**
  * Compute scheduled times for a user's measurement type + day-of-week
  */
-function computeScheduleTimes(patterns, nextMondayUTC) {
+function computeScheduleTimes(patterns, nextMondayUTC, userMealWindows) {
   const schedules = [];
   
   // Group by user, type, and day-of-week
@@ -148,12 +171,74 @@ function computeScheduleTimes(patterns, nextMondayUTC) {
       schedules.push({
         user_id: userId,
         measurement_type: measurementType,
-        scheduled_at: utcTimestamp.toISOString()
+        scheduled_at: utcTimestamp.toISOString(),
+        minute_of_day: targetMinute,
+        frequency: binReadings.length
       });
     }
   }
   
-  return schedules;
+  // Apply minimum spacing enforcement per user
+  const schedulesByUser = new Map();
+  for (const schedule of schedules) {
+    if (!schedulesByUser.has(schedule.user_id)) {
+      schedulesByUser.set(schedule.user_id, []);
+    }
+    schedulesByUser.get(schedule.user_id).push(schedule);
+  }
+  
+  const finalSchedules = [];
+  for (const [userId, userSchedules] of schedulesByUser.entries()) {
+    // Apply minimum spacing
+    const spacedSchedules = enforceMinimumSpacing(userSchedules, 90);
+    
+    // Get user's meal windows
+    const userWindows = userMealWindows.get(userId);
+    
+    let validatedSchedules = spacedSchedules;
+    
+    if (userWindows && userWindows.length > 0) {
+      // Phase 1: Adjust schedules near windows
+      validatedSchedules = adjustSchedulesToMealWindows(spacedSchedules, userWindows);
+      
+      // Phase 2: Fill missing meal window coverage
+      const userMeasurementTypes = getUserMeasurementTypes(patterns, userId);
+      const userMeasurementTypesMap = new Map([[userId, userMeasurementTypes]]);
+      
+      // Create timezone-aware date creator
+      const createScheduleDate = (dayOfWeek, minuteOfDay, targetMonday) => {
+        const warsawMonday = toZonedTime(targetMonday, TIMEZONE);
+        const daysToAdd = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        
+        const warsawTargetDate = new Date(warsawMonday);
+        warsawTargetDate.setDate(warsawMonday.getDate() + daysToAdd);
+        warsawTargetDate.setHours(Math.floor(minuteOfDay / 60), minuteOfDay % 60, 0, 0);
+        
+        return fromZonedTime(warsawTargetDate, TIMEZONE);
+      };
+      
+      const gapFillers = fillMissingMealWindowReminders(
+        validatedSchedules,
+        userWindows,
+        userMeasurementTypesMap,
+        nextMondayUTC,
+        createScheduleDate
+      );
+      
+      validatedSchedules = [...validatedSchedules, ...gapFillers];
+    }
+    
+    // Remove helper fields before insertion
+    for (const schedule of validatedSchedules) {
+      delete schedule.minute_of_day;
+      delete schedule.frequency;
+      delete schedule.is_default_reminder;
+    }
+    
+    finalSchedules.push(...validatedSchedules);
+  }
+  
+  return finalSchedules;
 }
 Deno.serve(async (req)=>{
   // CORS preflight
@@ -229,7 +314,9 @@ Deno.serve(async (req)=>{
         });
       }
       const patterns = [];
+      const userMealWindows = new Map<string, MealWindow[]>();
       let processedUsers = 0;
+      
       // Fetch readings for each user and analyze patterns
       for (const user of eligibleUsers){
         // Check if user has been scheduled before (first-time vs returning)
@@ -240,6 +327,16 @@ Deno.serve(async (req)=>{
           .limit(1);
         
         const isFirstTime = !previousSchedules || previousSchedules.length === 0;
+        
+        // Fetch user's meal windows for filtering
+        const { data: mealWindows } = await supabase
+          .from('user_meal_windows')
+          .select('*')
+          .eq('user_id', user.user_id);
+        
+        if (mealWindows && mealWindows.length > 0) {
+          userMealWindows.set(user.user_id, mealWindows);
+        }
         
         // First-time users: 60-day lookback for accuracy
         // Returning users: 7-day lookback for recent pattern adaptation
@@ -257,7 +354,10 @@ Deno.serve(async (req)=>{
         const daySpan = (lastReading.getTime() - firstReading.getTime()) / (1000 * 60 * 60 * 24);
         if (daySpan < 7) continue;
         processedUsers++;
-        // Extract patterns
+        
+        // Convert readings to filterable format
+        const readingsForFiltering: Reading[] = [];
+        
         for (const reading of readings) {
           const utcDate = new Date(reading.measured_at);
           // Convert UTC to Warsaw time to extract local time components
@@ -266,17 +366,40 @@ Deno.serve(async (req)=>{
           const minuteOfDay = warsawDate.getHours() * 60 + warsawDate.getMinutes();
           const dateStr = warsawDate.toISOString().split('T')[0]; // YYYY-MM-DD
           
-          patterns.push({
+          readingsForFiltering.push({
             user_id: user.user_id,
             measurement_type: reading.measurement_type,
             day_of_week: dayOfWeek,
-            date: dateStr, // Track the actual date
-            minutes_of_day: [minuteOfDay]
+            minute_of_day: minuteOfDay,
+            date: dateStr
+          });
+        }
+        
+        // Apply filtering
+        let filteredReadings = readingsForFiltering;
+        
+        // Step 1: Filter by meal windows (if defined)
+        const userWindows = userMealWindows.get(user.user_id);
+        if (userWindows && userWindows.length > 0) {
+          filteredReadings = filterReadingsByMealWindows(filteredReadings, userWindows);
+        }
+        
+        // Step 2: Remove statistical outliers
+        filteredReadings = filterOutliers(filteredReadings, 2);
+        
+        // Extract patterns from filtered readings
+        for (const reading of filteredReadings) {
+          patterns.push({
+            user_id: reading.user_id,
+            measurement_type: reading.measurement_type,
+            day_of_week: reading.day_of_week,
+            date: reading.date,
+            minutes_of_day: [reading.minute_of_day]
           });
         }
       }
-      // Compute schedules
-      const schedules = computeScheduleTimes(patterns, targetMonday);
+      // Compute schedules with filtering applied
+      const schedules = computeScheduleTimes(patterns, targetMonday, userMealWindows);
       // Delete existing schedules for target week (idempotency)
       const weekEnd = new Date(targetMonday);
       weekEnd.setDate(weekEnd.getDate() + 7);

@@ -136,12 +136,46 @@
 	},
 	"settings": {
 		"title": "Ustawienia",
+		"tabs": {
+			"general": "Ogólne",
+			"mealWindows": "Godziny Posiłków"
+		},
 		"notifications": {
 			"label": "Powiadomienia Push",
 			"description": "Otrzymuj przypomnienia i aktualizacje",
 			"enabled": "Powiadomienia włączone",
 			"disabled": "Powiadomienia wyłączone",
 			"error": "Nie udało się zaktualizować ustawień powiadomień"
+		}
+	},
+	"mealWindows": {
+		"title": "Okna Czasowe Posiłków",
+		"description": "Ustaw swoje typowe godziny posiłków, aby otrzymywać dokładne przypomnienia. Tylko pomiary w tych oknach czasowych będą używane do planowania.",
+		"selectDay": "Wybierz Dzień",
+		"timeStart": "Godzina Rozpoczęcia",
+		"timeEnd": "Godzina Zakończenia",
+		"mealLabel": "Posiłek {number} (1h po)",
+		"resetToDefaults": "Przywróć Domyślne",
+		"resetSuccess": "Okna posiłków przywrócone do domyślnych",
+		"days": {
+			"sunday": "Ndz",
+			"monday": "Pon",
+			"tuesday": "Wt",
+			"wednesday": "Śr",
+			"thursday": "Czw",
+			"friday": "Pt",
+			"saturday": "Sob"
+		},
+		"errors": {
+			"invalidTimeFormat": "Nieprawidłowy format czasu. Użyj GG:MM",
+			"updateFailed": "Nie udało się zaktualizować okna posiłku",
+			"resetFailed": "Nie udało się przywrócić domyślnych"
+		},
+		"help": {
+			"title": "Jak Działają Okna Posiłków",
+			"point1": "Ustaw zakres czasu, kiedy zazwyczaj mierzysz każdy typ (np. na czczo: 7:30-9:00)",
+			"point2": "Pomiary poza tymi oknami będą ignorowane przy planowaniu przypomnień",
+			"point3": "Pomaga to odfiltrować późne wpisy i poprawia dokładność przypomnień"
 		}
 	}
 }

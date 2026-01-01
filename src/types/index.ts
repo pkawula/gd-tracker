@@ -19,6 +19,18 @@ export interface UserSettings {
 	updated_at: string;
 }
 
+export interface MealWindow {
+	id: string;
+	user_id: string;
+	day_of_week: number;
+	measurement_type: MeasurementType;
+	meal_number: number | null;
+	time_start: string;
+	time_end: string;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface DateRange {
 	from: Date;
 	to: Date;
