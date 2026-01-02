@@ -27,7 +27,7 @@ export const useOneSignal = () => {
       if (!appId || typeof window === "undefined") {
         return;
       }
-      
+
       // Get theme preference for styling
       const isDarkMode = document.documentElement.classList.contains("dark");
 
@@ -36,7 +36,7 @@ export const useOneSignal = () => {
         initializationPromise.current = OneSignal.init({
           appId,
           safari_web_id: import.meta.env.VITE_ONESIGNAL_SAFARI_WEB_ID,
-          serviceWorkerPath: "/push/onesignal/OneSignalSDKWorker.js",
+          serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
           serviceWorkerParam: { scope: "/push/onesignal/js/" },
           allowLocalhostAsSecureOrigin: import.meta.env.DEV,
           welcomeNotification: {
@@ -57,7 +57,7 @@ export const useOneSignal = () => {
                     {
                       tag: "updates",
                       label: t("notifications.categories.updates"),
-                    }
+                    },
                   ],
                   delay: {
                     pageViews: 1,
@@ -72,10 +72,10 @@ export const useOneSignal = () => {
                     updateMessage: t("notifications.prompt.explanation"),
                   },
                   type: "push",
-                }
-              ]
-            }
-          }
+                },
+              ],
+            },
+          },
         });
 
         await initializationPromise.current;
@@ -84,38 +84,41 @@ export const useOneSignal = () => {
         setIsReady(true);
 
         // Register permission change listener to sync with Supabase
-        OneSignal.Notifications.addEventListener("permissionChange", async (granted) => {
-          try {
-            const {
-              data: { user },
-            } = await supabase.auth.getUser();
+        OneSignal.Notifications.addEventListener(
+          "permissionChange",
+          async (granted) => {
+            try {
+              const {
+                data: { user },
+              } = await supabase.auth.getUser();
 
-            if (!user) return;
+              if (!user) return;
 
-            // When user grants permission, update settings in Supabase
-            if (granted) {
-              const { error } = await supabase
-                .from("user_settings")
-                .upsert(
-                  {
-                    user_id: user.id,
-                    push_notifications_enabled: true,
-                  },
-                  {
-                    onConflict: "user_id",
-                  }
-                );
+              // When user grants permission, update settings in Supabase
+              if (granted) {
+                const { error } = await supabase
+                  .from("user_settings")
+                  .upsert(
+                    {
+                      user_id: user.id,
+                      push_notifications_enabled: true,
+                    },
+                    {
+                      onConflict: "user_id",
+                    },
+                  );
 
-              if (error && import.meta.env.DEV) {
-                console.error("Error syncing permission to Supabase:", error);
+                if (error && import.meta.env.DEV) {
+                  console.error("Error syncing permission to Supabase:", error);
+                }
+              }
+            } catch (error) {
+              if (import.meta.env.DEV) {
+                console.error("Error in permission change handler:", error);
               }
             }
-          } catch (error) {
-            if (import.meta.env.DEV) {
-              console.error("Error in permission change handler:", error);
-            }
-          }
-        });
+          },
+        );
 
         // Check initial permission state and sync to DB
         const initialPermission = OneSignal.Notifications.permission;
@@ -135,7 +138,7 @@ export const useOneSignal = () => {
                   },
                   {
                     onConflict: "user_id",
-                  }
+                  },
                 );
             }
           } catch (error) {
@@ -148,7 +151,7 @@ export const useOneSignal = () => {
         // Apply custom styling to match project UI
         // We'll inject styles after OneSignal loads to ensure proper override
         let styleApplied = false;
-        
+
         const applyCustomStyles = () => {
           // Only apply once - check if style element already exists
           if (document.getElementById("gd-tracker-onesignal-custom")) {
@@ -168,8 +171,12 @@ export const useOneSignal = () => {
             
             /* Dialog container - matching OneSignal's #container #dialog specificity */
             #onesignal-slidedown-container #onesignal-slidedown-dialog {
-              background: ${isDarkMode ? "oklch(0.18 0.05 265)" : "oklch(1 0 0)"} !important;
-              border: 1px solid ${isDarkMode ? "oklch(0.25 0.05 265)" : "oklch(0.92 0.02 265)"} !important;
+              background: ${
+            isDarkMode ? "oklch(0.18 0.05 265)" : "oklch(1 0 0)"
+          } !important;
+              border: 1px solid ${
+            isDarkMode ? "oklch(0.25 0.05 265)" : "oklch(0.92 0.02 265)"
+          } !important;
               border-radius: 0.75rem !important;
               padding: 1.5rem !important;
               box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
@@ -181,7 +188,9 @@ export const useOneSignal = () => {
             /* Text content */
             #onesignal-slidedown-container #onesignal-slidedown-dialog .slidedown-body,
             #onesignal-slidedown-container #onesignal-slidedown-dialog .slidedown-body-message {
-              color: ${isDarkMode ? "oklch(0.98 0.01 165)" : "oklch(0.20 0.06 265)"} !important;
+              color: ${
+            isDarkMode ? "oklch(0.98 0.01 165)" : "oklch(0.20 0.06 265)"
+          } !important;
               font-size: 0.95rem !important;
               line-height: 1.6 !important;
               margin-bottom: 1.25rem !important;
@@ -223,8 +232,12 @@ export const useOneSignal = () => {
             #onesignal-slidedown-container #onesignal-slidedown-dialog button.secondary {
               background: transparent !important;
               background-color: transparent !important;
-              color: ${isDarkMode ? "oklch(0.70 0.04 265)" : "oklch(0.55 0.04 265)"} !important;
-              border: 1px solid ${isDarkMode ? "oklch(0.25 0.05 265)" : "oklch(0.92 0.02 265)"} !important;
+              color: ${
+            isDarkMode ? "oklch(0.70 0.04 265)" : "oklch(0.55 0.04 265)"
+          } !important;
+              border: 1px solid ${
+            isDarkMode ? "oklch(0.25 0.05 265)" : "oklch(0.92 0.02 265)"
+          } !important;
               border-radius: 0.5rem !important;
               font-weight: 500 !important;
               padding: 0.625rem 1.5rem !important;
@@ -236,9 +249,15 @@ export const useOneSignal = () => {
             
             #onesignal-slidedown-container #onesignal-slidedown-dialog .onesignal-slidedown-cancel-button:hover,
             #onesignal-slidedown-container #onesignal-slidedown-dialog .secondary.slidedown-button:hover {
-              background: ${isDarkMode ? "oklch(0.25 0.05 265)" : "oklch(0.97 0.01 265)"} !important;
-              background-color: ${isDarkMode ? "oklch(0.25 0.05 265)" : "oklch(0.97 0.01 265)"} !important;
-              border-color: ${isDarkMode ? "oklch(0.28 0.05 265)" : "oklch(0.88 0.02 265)"} !important;
+              background: ${
+            isDarkMode ? "oklch(0.25 0.05 265)" : "oklch(0.97 0.01 265)"
+          } !important;
+              background-color: ${
+            isDarkMode ? "oklch(0.25 0.05 265)" : "oklch(0.97 0.01 265)"
+          } !important;
+              border-color: ${
+            isDarkMode ? "oklch(0.28 0.05 265)" : "oklch(0.88 0.02 265)"
+          } !important;
             }
             
             /* Button container */
@@ -251,10 +270,12 @@ export const useOneSignal = () => {
             
             /* Icon styling */
             #onesignal-slidedown-container #onesignal-slidedown-dialog .slidedown-body-icon {
-              filter: ${isDarkMode ? "brightness(1.2)" : "brightness(1)"} !important;
+              filter: ${
+            isDarkMode ? "brightness(1.2)" : "brightness(1)"
+          } !important;
             }
           `;
-          
+
           // Append to end of head to ensure it comes after OneSignal's styles
           document.head.appendChild(style);
           styleApplied = true;
@@ -275,9 +296,9 @@ export const useOneSignal = () => {
                 (node) =>
                   node instanceof HTMLElement &&
                   (node.id === "onesignal-slidedown-container" ||
-                    node.className?.includes("onesignal-slidedown"))
+                    node.className?.includes("onesignal-slidedown")),
               );
-              
+
               if (hasSlidedown) {
                 // Apply styles once when slidedown appears
                 setTimeout(() => {
@@ -333,7 +354,7 @@ export const useOneSignal = () => {
         }
       }
     },
-    [language]
+    [language],
   );
 
   const logoutUserFromOneSignal = useCallback(async () => {
