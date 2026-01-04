@@ -30,11 +30,12 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 				}
 
 				// Try to get existing settings
-				const { data: existingSettings, error: fetchError } = await supabase
-					.from("user_settings")
-					.select("*")
-					.eq("user_id", user.id)
-					.single();
+				const { data: existingSettings, error: fetchError } =
+					await supabase
+						.from("user_settings")
+						.select("*")
+						.eq("user_id", user.id)
+						.single();
 
 				if (fetchError && fetchError.code !== "PGRST116") {
 					// PGRST116 = not found
@@ -45,7 +46,9 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 				if (!existingSettings) {
 					// Detect browser language
 					const browserLang = navigator.language.toLowerCase();
-					const defaultLanguage = browserLang.startsWith("pl") ? "pl" : "en";
+					const defaultLanguage = browserLang.startsWith("pl")
+						? "pl"
+						: "en";
 
 					const newSettings: Partial<UserSettings> = {
 						user_id: user.id,
@@ -53,11 +56,12 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 						language: defaultLanguage,
 					};
 
-					const { data: createdSettings, error: createError } = await supabase
-						.from("user_settings")
-						.insert(newSettings)
-						.select()
-						.single();
+					const { data: createdSettings, error: createError } =
+						await supabase
+							.from("user_settings")
+							.insert(newSettings)
+							.select()
+							.single();
 
 					if (createError) throw createError;
 
@@ -69,7 +73,11 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 				if (import.meta.env.DEV) {
 					console.error("Error fetching user settings:", err);
 				}
-				setError(err instanceof Error ? err : new Error("Failed to fetch settings"));
+				setError(
+					err instanceof Error
+						? err
+						: new Error("Failed to fetch settings"),
+				);
 			} finally {
 				setLoading(false);
 			}
@@ -81,6 +89,35 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 	const updateSettings = useCallback(
 		async (enabled: boolean) => {
 			try {
+				// Check if OneSignal is initialized before trying to use it
+				if (typeof OneSignal !== "undefined" && OneSignal.User) {
+					if (enabled) {
+						// Enable notifications
+						await OneSignal.User.PushSubscription.optIn();
+						if (import.meta.env.DEV) {
+							console.log(
+								"OneSignal: Opted in to push notifications",
+							);
+						}
+					} else {
+						// Disable notifications
+						await OneSignal.User.PushSubscription.optOut();
+						if (import.meta.env.DEV) {
+							console.log(
+								"OneSignal: Opted out of push notifications",
+							);
+						}
+					}
+				} else {
+					if (import.meta.env.DEV) {
+						console.warn(
+							"OneSignal not initialized yet, skipping opt-in/out",
+						);
+					}
+
+					throw new Error("OneSignal not initialized");
+				}
+
 				const {
 					data: { user },
 				} = await supabase.auth.getUser();
@@ -90,45 +127,17 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 				}
 
 				// Update Supabase
-				const { data: updatedSettings, error: updateError } = await supabase
-					.from("user_settings")
-					.update({ push_notifications_enabled: enabled })
-					.eq("user_id", user.id)
-					.select()
-					.single();
+				const { data: updatedSettings, error: updateError } =
+					await supabase
+						.from("user_settings")
+						.update({ push_notifications_enabled: enabled })
+						.eq("user_id", user.id)
+						.select()
+						.single();
 
 				if (updateError) throw updateError;
 
 				setSettings(updatedSettings);
-
-			// Sync with OneSignal
-			try {
-				// Check if OneSignal is initialized before trying to use it
-				if (typeof OneSignal !== "undefined" && OneSignal.User) {
-					if (enabled) {
-						// Enable notifications
-						await OneSignal.User.PushSubscription.optIn();
-						if (import.meta.env.DEV) {
-							console.log("OneSignal: Opted in to push notifications");
-						}
-					} else {
-						// Disable notifications
-						await OneSignal.User.PushSubscription.optOut();
-						if (import.meta.env.DEV) {
-							console.log("OneSignal: Opted out of push notifications");
-						}
-					}
-				} else {
-					if (import.meta.env.DEV) {
-						console.warn("OneSignal not initialized yet, skipping opt-in/out");
-					}
-				}
-			} catch (oneSignalError) {
-				if (import.meta.env.DEV) {
-					console.error("Error syncing with OneSignal:", oneSignalError);
-				}
-				// Don't throw - we want the DB update to succeed even if OneSignal fails
-			}
 			} catch (err) {
 				if (import.meta.env.DEV) {
 					console.error("Error updating user settings:", err);
@@ -136,7 +145,7 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 				throw err;
 			}
 		},
-		[]
+		[],
 	);
 
 	const updateLanguage = useCallback(
@@ -151,12 +160,13 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 				}
 
 				// Update Supabase
-				const { data: updatedSettings, error: updateError } = await supabase
-					.from("user_settings")
-					.update({ language })
-					.eq("user_id", user.id)
-					.select()
-					.single();
+				const { data: updatedSettings, error: updateError } =
+					await supabase
+						.from("user_settings")
+						.update({ language })
+						.eq("user_id", user.id)
+						.select()
+						.single();
 
 				if (updateError) throw updateError;
 
@@ -168,7 +178,7 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 				throw err;
 			}
 		},
-		[]
+		[],
 	);
 
 	return {
@@ -179,4 +189,3 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 		updateLanguage,
 	};
 };
-

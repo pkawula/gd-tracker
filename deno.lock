@@ -1,6 +1,8 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@std/assert@*": "1.0.16",
+    "jsr:@std/internal@^1.0.12": "1.0.12",
     "npm:@eslint/js@^9.36.0": "9.39.2",
     "npm:@radix-ui/react-dialog@^1.1.15": "1.1.15_@types+react@19.2.7_@types+react-dom@19.2.3__@types+react@19.2.7_react@19.2.3_react-dom@19.2.3__react@19.2.3",
     "npm:@radix-ui/react-label@^2.1.8": "2.1.8_@types+react@19.2.7_@types+react-dom@19.2.3__@types+react@19.2.7_react@19.2.3_react-dom@19.2.3__react@19.2.3",
@@ -40,6 +42,17 @@
     "npm:vite-plugin-mkcert@^1.17.9": "1.17.9_vite@7.3.0__@types+node@24.10.4__picomatch@4.0.3_@types+node@24.10.4",
     "npm:vite-plugin-pwa@^1.1.0": "1.2.0_vite@7.3.0__@types+node@24.10.4__picomatch@4.0.3_workbox-build@7.4.0__ajv@8.17.1__@babel+core@7.28.5__rollup@2.79.2_workbox-window@7.4.0_@types+node@24.10.4",
     "npm:vite@^7.1.7": "7.3.0_@types+node@24.10.4_picomatch@4.0.3"
+  },
+  "jsr": {
+    "@std/assert@1.0.16": {
+      "integrity": "6a7272ed1eaa77defe76e5ff63ca705d9c495077e2d5fd0126d2b53fc5bd6532",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
+    "@std/internal@1.0.12": {
+      "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
+    }
   },
   "npm": {
     "@apideck/better-ajv-errors@0.3.6_ajv@8.17.1": {
