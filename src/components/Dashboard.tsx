@@ -62,6 +62,23 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 	// Smart button logic
 	const now = new Date();
 	const isBeforeTenAM = now.getHours() < 10;
+	const defaultMeasurementType: MeasurementType = isBeforeTenAM ? "fasting" : "1hr_after_meal";
+
+	const [incomingMeasurementType, setIncomingMeasurementType] = useState<MeasurementType | null>(null);
+
+	useEffect(() => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const modalParam = searchParams.get("modal");
+
+		if (modalParam === "fasting" || modalParam === "1hr_after_meal") {
+			setIncomingMeasurementType(modalParam as MeasurementType);
+			setAddDialogOpen(true);
+			
+			// Clean up URL
+			const newUrl = window.location.pathname;
+			window.history.replaceState({}, "", newUrl);
+		}
+	}, []);
 
 	// Filter readings for today
 	const todayStart = startOfDay(new Date());
@@ -69,9 +86,6 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 
 	// Determine smart button text
 	const addButtonText = !hasReadingsToday && isBeforeTenAM ? t("readings.addFasting") : t("readings.add");
-
-	// Determine prefill measurement type
-	const prefillMeasurementType: MeasurementType = isBeforeTenAM ? "fasting" : "1hr_after_meal";
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -130,9 +144,12 @@ export default function Dashboard({ session, onSignOut }: DashboardProps) {
 					<RecordDialog
 						mode="add"
 						open={addDialogOpen}
-						onOpenChange={setAddDialogOpen}
+						onOpenChange={(open) => {
+							setAddDialogOpen(open);
+							if (!open) setIncomingMeasurementType(null); // Reset when closed
+						}}
 						onSuccess={handleAddSuccess}
-						initialMeasurementType={prefillMeasurementType}
+						initialMeasurementType={incomingMeasurementType ?? defaultMeasurementType}
 					/>
 				</div>
 			</main>

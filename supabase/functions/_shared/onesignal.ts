@@ -14,6 +14,7 @@ interface NotificationPayload {
   headings: Record<string, string>;
   contents: Record<string, string>;
   data?: Record<string, unknown>;
+  url?: string;
 }
 
 interface OneSignalResponse {
@@ -72,6 +73,7 @@ export async function sendPushNotification(
     headings: payload.headings, // ensure same languages as contents if provided
     contents: payload.contents, // must include 'en'
     data: payload.data ?? {},
+    url: payload.url,
   };
 
   const response = await fetch(url, {
